@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Python Chatbot</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --header-color: #161b22;
+            --text-color: #ffffff;
+            --user-bg: #238636;
+            --bot-bg: #30363d;
+        }
+
+        body.light-mode {
+            --bg-color: #f4f4f4;
+            --header-color: #e2e2e2;
+            --text-color: #000000;
+            --user-bg: #d1ffd1;
+            --bot-bg: #f0f0f0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: "Segoe UI", sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .chat-header {
+            background-color: var(--header-color);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--user-bg);
+            color: var(--text-color);
+            border-bottom-right-radius: 0;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: var(--bot-bg);
+            color: orange;
+            border-bottom-left-radius: 0;
+        }
+
+        .chat-footer {
+            display: flex;
+            padding: 10px;
+            background-color: var(--header-color);
+            border-top: 1px solid #30363d;
+        }
+
+        .chat-footer input {
+            flex: 1;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: var(--text-color);
+            margin-right: 10px;
+        }
+
+        .chat-footer button {
+            background-color: #00ffea;
+            color: black;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        a {
+            color: #00ffea;
+            text-decoration: underline;
+        }
+
+        pre {
+            background: #0c0c0c;
+            color: #39ff14;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-header">
+    🐍 Learn Python
+    <button class="toggle-btn" onclick="toggleTheme()">🌓</button>
+</div>
+
+<div class="chat-body" id="chat-box"></div>
+
+<div class="chat-footer">
+    <input type="text" id="user-input" placeholder="Ask a Python question..." onkeydown="if(event.key==='Enter'){sendMessage()}">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+    function toggleTheme() {
+        document.body.classList.toggle("light-mode");
+    }
+
+    function sendMessage() {
+        let msg = $('#user-input').val().trim();
+        if (!msg) return;
+
+        // Add user message
+        $('#chat-box').append(`<div class="message user-message">${msg}</div>`);
+        $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+        $('#user-input').val('');
+
+        // Add typing indicator
+        $('#chat-box').append(`<div class="message bot-message" id="typing">🤖 Typing...</div>`);
+
+        // Send request
+        $.post('/chat/', {
+            message: msg,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function (data) {
+            $('#typing').remove();
+            simulateTyping(data.reply, data.source);
+        });
+    }
+
+    function simulateTyping(text, source) {
+        let index = 0;
+        let message = '';
+        const botDiv = $('<div class="message bot-message"></div>');
+        $('#chat-box').append(botDiv);
+
+        const typeInterval = setInterval(() => {
+            if (index < text.length) {
+                message += text.charAt(index++);
+                botDiv.html(message);
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            } else {
+                if (source) {
+                    botDiv.append(`<br><br>📎 <a href="${source}" target="_blank">Source</a>`);
+                }
+                clearInterval(typeInterval);
+            }
+        }, 20); // Speed of typing (20ms per character)
+    }
+</script>
+
+</body>
+</html>
