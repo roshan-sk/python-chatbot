@@ -3,6 +3,9 @@
 <head>
     <title>Python Chatbot</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% load static %}
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#0d1117">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
@@ -192,6 +195,13 @@
             }
         }, 20); // Speed of typing (20ms per character)
     }
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register("{% static 'service-worker.js' %}")
+        .then(() => console.log('✅ Service Worker Registered'))
+        .catch(err => console.error('❌ SW Error:', err));
+}
 </script>
 
 </body>
